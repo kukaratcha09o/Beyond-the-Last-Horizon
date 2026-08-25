@@ -379,27 +379,33 @@ export function updateGame(
   }
 
   // ---- Input: camera-relative movement ----
-  // The yaw is the player's facing/camera orbit angle.
-  // Forward is the direction the camera looks (away from camera, into screen).
+  // Yaw represents the camera orbit angle and player aim direction.
+  // Forward vector F points in the camera look direction on the horizontal plane.
+  // Right vector R points orthogonally to the right of camera view.
   const yaw = r.cameraYaw;
-  const forward = _tmpV.set(-Math.sin(yaw), 0, -Math.cos(yaw));
-  const right = _tmpV2.set(Math.cos(yaw), 0, -Math.sin(yaw));
+  const forward = _tmpV.set(-Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
+  const right = _tmpV2.set(Math.cos(yaw), 0, -Math.sin(yaw)).normalize();
 
   const moveDir = new THREE.Vector3();
   if (KEYS.has('w') || KEYS.has('arrowup')) moveDir.add(forward);
   if (KEYS.has('s') || KEYS.has('arrowdown')) moveDir.sub(forward);
   if (KEYS.has('d') || KEYS.has('arrowright')) moveDir.add(right);
   if (KEYS.has('a') || KEYS.has('arrowleft')) moveDir.sub(right);
-  if (moveDir.lengthSq() > 0) moveDir.normalize();
 
   let speed = PLAYER.baseSpeed + r.playerSkills.speed * 1.1;
   if (r.playerExhaustion <= 0) speed *= 0.5;
 
   const vel = r.playerVel;
-  // Instant stop: when no input, horizontal velocity is zeroed immediately.
-  // When input present, set velocity directly (no acceleration/friction).
-  vel.x = moveDir.x * speed;
-  vel.z = moveDir.z * speed;
+  // Instant stop & deadzone: if input is active, set horizontal velocity directly.
+  // If no directional key is pressed, immediately zero horizontal velocity with 0 inertia.
+  if (moveDir.lengthSq() > 0.0001) {
+    moveDir.normalize();
+    vel.x = moveDir.x * speed;
+    vel.z = moveDir.z * speed;
+  } else {
+    vel.x = 0;
+    vel.z = 0;
+  }
   vel.y -= PLAYER.gravity * dt;
 
   // Jump — check ground before integrating
