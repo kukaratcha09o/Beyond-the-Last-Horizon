@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import type {
   LevelData, PlatformData, EnemySpawn, BushData, ChickenData, NPCData, EnemyKind,
 } from './types';

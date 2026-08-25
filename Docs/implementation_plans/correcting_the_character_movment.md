@@ -1,8 +1,8 @@
 # Implementation Plan: Character Movement & Third-Person Camera Correction
 
-> **Target File**: `Docs/implementation_plans/correcting_the_character_movement.md`  
-> **Status**: Ready for Execution  
-> **References**: [`docs/codebase_analisys.md`](file:///docs/codebase_analisys.md)
+> **Target File**: `Docs/implementation_plans/correcting_the_character_movment.md`  
+> **Status**: Completed  
+> **References**: [`Docs/codebase_analisys.md`](file:///Docs/codebase_analisys.md), [`Docs/game_idea.md`](file:///Docs/game_idea.md)
 
 ---
 
@@ -105,7 +105,7 @@ This implementation is broken down into **5 atomic, logical steps**, each design
   2. Accumulate movement direction vector $\vec{M}$ from active keyboard keys (`W` $\to +\vec{F}$, `S` $\to -\vec{F}$, `D` $\to +\vec{R}$, `A` $\to -\vec{R}$).
   3. Implement tight input deadzone & instant zero-inertia stop:
      - When $|\vec{M}| > 0.0001$: $\vec{V}_{\text{horiz}} = \text{normalize}(\vec{M}) \times \text{Speed}$.
-     - When $|\vec{M}| \le 0.0001$: $V_x = 0, $V_z = 0$.
+     - When $|\vec{M}| \le 0.0001$: $V_x = 0, V_z = 0$.
   4. Bind player mesh rotation to `gameRefs.cameraYaw` so the protagonist turns synchronously with mouse aim.
 - **Verification / Testing**:
   - Pressing `W` moves character directly in forward camera direction.
@@ -166,13 +166,39 @@ This implementation is broken down into **5 atomic, logical steps**, each design
 
 | Step | Action | Expected Result | Pass / Fail |
 |---|---|---|---|
-| **1** | Forward walk (`W`) | Moves forward along crosshair / camera forward vector | [ ] |
-| **2** | Backpedal (`S`) | Moves backwards towards camera at steady speed | [ ] |
-| **3** | Strafe (`A` / `D`) | Strafes left / right relative to camera view | [ ] |
-| **4** | Diagonals (`W+A`, `W+D`) | Moves diagonally at normalized speed without acceleration boost | [ ] |
-| **5** | Key release | Instant stop on a dime, 0 sliding | [ ] |
-| **6** | Mouse turn | Character turns body with mouse yaw; camera orbits smoothly | [ ] |
-| **7** | Mouse vertical tilt | Pitch angles smoothly between -0.8 and +0.6 rad | [ ] |
-| **8** | Jump (`Space`) | Upward velocity with gravity landing on platforms | [ ] |
-| **9** | Void fall | Trigger death screen with cause 'You fell into the void' | [ ] |
-| **10** | Build check | `npm run typecheck` & `npm run build` pass cleanly | [ ] |
+| **1** | Forward walk (`W`) | Moves forward along crosshair / camera forward vector | [x] |
+| **2** | Backpedal (`S`) | Moves backwards towards camera at steady speed | [x] |
+| **3** | Strafe (`A` / `D`) | Strafes left / right relative to camera view | [x] |
+| **4** | Diagonals (`W+A`, `W+D`) | Moves diagonally at normalized speed without acceleration boost | [x] |
+| **5** | Key release | Instant stop on a dime, 0 sliding | [x] |
+| **6** | Mouse turn | Character turns body with mouse yaw; camera orbits smoothly | [x] |
+| **7** | Mouse vertical tilt | Pitch angles smoothly between -0.8 and +0.6 rad | [x] |
+| **8** | Jump (`Space`) | Upward velocity with gravity landing on platforms | [x] |
+| **9** | Void fall | Trigger death screen with cause 'You fell into the void' | [x] |
+| **10** | Build check | `npm run typecheck` & `npm run build` pass cleanly | [x] |
+
+---
+
+## 6. Execution Quick-Reference Summary
+
+A high-level overview of the 5 sequential Git commits to execute:
+
+1. **Commit 1 (`fix(player)`: Decouple `PlayerMesh` Local Transforms)**
+   - **Target**: [`src/components/PlayerMesh.tsx`](file:///src/components/PlayerMesh.tsx)
+   - **Summary**: Remove the internal `useFrame` transform copy of `playerPos` and duplicate inactive point light. Anchor the 3D survivor model at local origin `(0, 0, 0)`.
+
+2. **Commit 2 (`feat(physics)`: Camera-Relative WASD Movement & Instant Stop)**
+   - **Target**: [`src/game/engine.ts`](file:///src/game/engine.ts)
+   - **Summary**: Calculate normalized `forward`/`right` vectors based on `cameraYaw`. Map `W` (forward), `S` (backward), `A`/`D` (strafe). Apply zero-inertia instant stopping on key release and sync character body yaw with mouse aim.
+
+3. **Commit 3 (`feat(camera)`: Rigid Spherical 3rd-Person Orbit & LookAt)**
+   - **Target**: [`src/game/engine.ts`](file:///src/game/engine.ts)
+   - **Summary**: Implement standard 3rd-person spherical coordinate calculation ($D_h = \text{camDist} \cdot \cos(\text{pitch})$, $D_v = \text{camHeight} + \text{camDist} \cdot \sin(\text{pitch})$) with fixed 5.0m distance and 2.5m height. Synchronously lock `camera.lookAt(player.x, player.y + 1.2, player.z)` every frame.
+
+4. **Commit 4 (`refactor(scene)`: Hierarchy & Pointer Lock Synchronization)**
+   - **Target**: [`src/components/GameScene.tsx`](file:///src/components/GameScene.tsx)
+   - **Summary**: Structure the `<group ref={playerRef}>` hierarchy with the active night vision point light. Verify canvas pointer lock listeners, pitch limits, and clean re-locking on menu close.
+
+5. **Commit 5 (`chore(qa)`: Typechecking, Linting & Build Verification)**
+   - **Target**: Entire workspace
+   - **Summary**: Run `npm run typecheck`, `npm run lint`, and `npm run build` to verify 0 errors and production readiness.

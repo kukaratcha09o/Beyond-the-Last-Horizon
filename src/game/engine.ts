@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { gameRefs } from './refs';
 import { useGame } from './store';
-import { generateLevel, biomeName } from './levelGen';
+import { generateLevel } from './levelGen';
 import {
-  PLAYER, ENEMY, CHICKEN, KEYS, DAY_LENGTH, NIGHT_LENGTH, CYCLE_LENGTH,
+  PLAYER, ENEMY, CHICKEN, KEYS, DAY_LENGTH, CYCLE_LENGTH,
   HUNGER_DECAY, EXHAUSTION_DECAY, STARVE_DAMAGE, xpForLevel,
 } from './constants';
 import type { LevelData, PlatformData } from './types';
@@ -71,7 +71,7 @@ export interface GameWorld {
 // ---------- Collision helpers ----------
 function collidePlatforms(
   pos: THREE.Vector3, vel: THREE.Vector3, radius: number, height: number,
-  platforms: PlatformRT[], dt: number,
+  platforms: PlatformRT[],
 ): { onGround: boolean } {
   let onGround = false;
 
@@ -128,20 +128,6 @@ function collidePlatforms(
   }
 
   return { onGround };
-}
-
-function onPlatformTop(pos: THREE.Vector3, radius: number, platforms: PlatformRT[]): PlatformRT | null {
-  for (const p of platforms) {
-    if (p.goneTime > 0) continue;
-    const d = p.data;
-    if (d.isVegetation) continue;
-    const dx = Math.abs(pos.x - d.position[0]);
-    const dz = Math.abs(pos.z - d.position[2]);
-    if (dx > d.size[0] / 2 + radius || dz > d.size[2] / 2 + radius) continue;
-    const topY = d.position[1] + d.size[1] / 2;
-    if (Math.abs(pos.y - topY) < 0.2) return p;
-  }
-  return null;
 }
 
 // ---------- World building ----------
@@ -420,7 +406,7 @@ export function updateGame(
   r.playerPos.z += vel.z * dt;
 
   // Collide
-  const { onGround } = collidePlatforms(r.playerPos, vel, PLAYER.radius, PLAYER.height, world.platforms, dt);
+  const { onGround } = collidePlatforms(r.playerPos, vel, PLAYER.radius, PLAYER.height, world.platforms);
   if (onGround) vel.y = 0;
 
   // Fall death

@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 export type EnemyKind = 'scavenger' | 'beast' | 'brute' | 'leviathan';
 
 export interface EnemySpawn {

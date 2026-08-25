@@ -32,7 +32,6 @@ export function HUD() {
   const xpPct = (hud.xp / hud.xpMax) * 100;
   const exhausted = hud.exhaustion <= 0;
   const blurClass = exhausted ? 'backdrop-blur-sm' : '';
-  const nightOverlay = hud.isNight && hud.skills.vision === 0;
 
   return (
     <>
