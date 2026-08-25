@@ -183,9 +183,13 @@ export function GameScene() {
     return () => canvas.removeEventListener('click', onClick);
   }, [phase, level]);
 
-  // Re-lock when menu closes
+  // Re-lock when menu closes / exit pointer lock when menu opens
   useEffect(() => {
-    if (!skillMenuOpen && phase === 'playing') {
+    if (skillMenuOpen) {
+      if (document.pointerLockElement) {
+        document.exitPointerLock?.();
+      }
+    } else if (phase === 'playing') {
       const canvas = document.querySelector('canvas');
       const t = setTimeout(() => canvas?.requestPointerLock?.(), 100);
       return () => clearTimeout(t);
@@ -219,7 +223,7 @@ export function GameScene() {
         <PlayerMesh />
         <pointLight
           ref={visionLightRef}
-          position={[0, 1, 0]}
+          position={[0, 1.2, 0]}
           color={0x88ccff}
           intensity={0}
           distance={10}
