@@ -434,14 +434,17 @@ export function updateGame(
   playerMesh.position.copy(r.playerPos);
   playerMesh.rotation.y = yaw;
 
-  // ---- Camera (third-person, strictly locked behind player) ----
-  // No lerp: camera is rigidly positioned behind the player every frame.
-  const camDist = 5;
-  const camHeight = 2;
+  // ---- Camera (third-person spherical orbit rigidly following player) ----
+  const camDist = 5.0;
+  const camHeight = 2.5;
+  const clampedPitch = Math.max(-0.8, Math.min(0.6, r.cameraPitch));
+  const horizDist = camDist * Math.cos(clampedPitch);
+  const vertDist = camHeight + camDist * Math.sin(clampedPitch);
+
   _camOffset.set(
-    r.playerPos.x - forward.x * camDist,
-    r.playerPos.y + camHeight + r.cameraPitch * camDist,
-    r.playerPos.z - forward.z * camDist,
+    r.playerPos.x + Math.sin(yaw) * horizDist,
+    r.playerPos.y + vertDist,
+    r.playerPos.z + Math.cos(yaw) * horizDist,
   );
   camera.position.copy(_camOffset);
   camera.lookAt(r.playerPos.x, r.playerPos.y + 1.2, r.playerPos.z);
